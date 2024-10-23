@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import { Link } from 'react-router-dom'
 import {
   CButton,
@@ -12,11 +12,59 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
+  CAlert
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
+import { useNavigate  } from 'react-router-dom';
 
 const Login = () => {
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: ''
+  })
+  const [showAlert, setShowAlert] = useState(false)
+
+  const navigate = useNavigate();
+
+  const login = async () => {
+    try {
+      const response = await fetch('http://localhost:4000/api/v1/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(loginData)
+      });
+      
+      const result = await response.json(); 
+      
+      if(result.error) {
+        setShowAlert(true)
+        setTimeout(() => {
+          setShowAlert(false)
+        }, 3000)
+        return
+      }
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    
+    setLoginData({
+      ...loginData,
+      [name]: value 
+    });
+  };
+
+  useEffect(() => {
+    console.log(loginData);
+  }, [loginData])
+  
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
@@ -32,7 +80,7 @@ const Login = () => {
                       <CInputGroupText>
                         <CIcon icon={cilUser} />
                       </CInputGroupText>
-                      <CFormInput placeholder="Username" autoComplete="username" />
+                      <CFormInput placeholder="Email" name="email" value={loginData.email} onChange={handleInputChange} />
                     </CInputGroup>
                     <CInputGroup className="mb-4">
                       <CInputGroupText>
@@ -41,12 +89,15 @@ const Login = () => {
                       <CFormInput
                         type="password"
                         placeholder="Password"
+                        name="password"
+                        value={loginData.password}
+                        onChange={handleInputChange}
                         autoComplete="current-password"
                       />
                     </CInputGroup>
                     <CRow>
                       <CCol xs={6}>
-                        <CButton color="primary" className="px-4">
+                        <CButton color="primary" className="px-4" onClick={login}>
                           Login
                         </CButton>
                       </CCol>
@@ -57,7 +108,12 @@ const Login = () => {
                       </CCol>
                     </CRow>
                   </CForm>
-                </CCardBody>
+                </CCardBody>   
+                {showAlert && (
+                  <CAlert color="danger">
+                    A simple danger alert—check it out!
+                  </CAlert>
+                )}             
               </CCard>
               <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
                 <CCardBody className="text-center">
@@ -74,10 +130,10 @@ const Login = () => {
                     </Link>
                   </div>
                 </CCardBody>
-              </CCard>
-            </CCardGroup>
+              </CCard>      
+            </CCardGroup>                                  
           </CCol>
-        </CRow>
+        </CRow>        
       </CContainer>
     </div>
   )
