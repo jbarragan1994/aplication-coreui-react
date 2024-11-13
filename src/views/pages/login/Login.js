@@ -1,4 +1,6 @@
-import React, {useState, useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
+import useFetch from '../../../hook/useFetch'
+
 import { Link } from 'react-router-dom'
 import {
   CButton,
@@ -12,59 +14,67 @@ import {
   CInputGroup,
   CInputGroupText,
   CRow,
-  CAlert
+  CAlert,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
-import { useNavigate  } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
+  //const { data, loading, error } = useFetch('POST', 'users/login')
   const [loginData, setLoginData] = useState({
     email: '',
-    password: ''
+    password: '',
   })
   const [showAlert, setShowAlert] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(null)
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const login = async () => {
     try {
       const response = await fetch('http://localhost:4000/api/v1/users/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(loginData)
-      });
-      
-      const result = await response.json(); 
-      
-      if(result.error) {
+        body: JSON.stringify(loginData),
+      })
+
+      const result = await response.json()
+
+      if (result.error) {
         setShowAlert(true)
+        setErrorMessage(result.error)
         setTimeout(() => {
           setShowAlert(false)
+          setErrorMessage(null)
         }, 3000)
         return
       }
-      navigate('/dashboard');
+
+      localStorage.setItem('token', result.msg.token)
+      navigate('/dashboard')
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error)
     }
   }
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const { data, loading, error } = useFetch('POST', 'users/login', JSON.stringify(loginData))
+    console.log(data)
+  }
+
   const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    
+    const { name, value } = event.target
+
     setLoginData({
       ...loginData,
-      [name]: value 
-    });
-  };
+      [name]: value,
+    })
+  }
 
-  useEffect(() => {
-    console.log(loginData);
-  }, [loginData])
-  
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
@@ -80,7 +90,12 @@ const Login = () => {
                       <CInputGroupText>
                         <CIcon icon={cilUser} />
                       </CInputGroupText>
-                      <CFormInput placeholder="Email" name="email" value={loginData.email} onChange={handleInputChange} />
+                      <CFormInput
+                        placeholder="Email"
+                        name="email"
+                        value={loginData.email}
+                        onChange={handleInputChange}
+                      />
                     </CInputGroup>
                     <CInputGroup className="mb-4">
                       <CInputGroupText>
@@ -108,12 +123,8 @@ const Login = () => {
                       </CCol>
                     </CRow>
                   </CForm>
-                </CCardBody>   
-                {showAlert && (
-                  <CAlert color="danger">
-                    A simple danger alert—check it out!
-                  </CAlert>
-                )}             
+                </CCardBody>
+                {showAlert && <CAlert color="danger">{errorMessage}</CAlert>}
               </CCard>
               <CCard className="text-white bg-primary py-5" style={{ width: '44%' }}>
                 <CCardBody className="text-center">
@@ -130,10 +141,10 @@ const Login = () => {
                     </Link>
                   </div>
                 </CCardBody>
-              </CCard>      
-            </CCardGroup>                                  
+              </CCard>
+            </CCardGroup>
           </CCol>
-        </CRow>        
+        </CRow>
       </CContainer>
     </div>
   )
